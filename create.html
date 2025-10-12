@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Create Task - CashTarget</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root{ --bg:#f6f6f7; --card:#ffffff; --muted:#8b8b8b; --accent:#111111; --radius:18px; --shadow:0 8px 18px rgba(15,15,15,0.06); }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:"Inter",sans-serif;background:var(--bg);color:var(--accent);}
+    .app{max-width:480px;margin:auto;padding:14px 14px 96px 14px;}
+    .card{background:var(--card);border-radius:var(--radius);padding:22px;margin-bottom:18px;box-shadow:var(--shadow);}
+
+    .header{text-align:center;margin-bottom:24px;}
+    .header h1{font-family:"Fredoka One";font-size:32px;margin:0 0 8px 0;}
+    .header p{color:var(--muted);margin:0;}
+
+    .form-group{margin-bottom:20px;}
+    .form-label{display:block;font-weight:600;margin-bottom:8px;color:var(--accent);}
+    .form-input{
+      width:100%;padding:14px 16px;border:2px solid #e5e5e5;border-radius:12px;
+      font-family:"Inter",sans-serif;font-size:15px;transition:all .3s;
+    }
+    .form-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,0,0,0.05);}
+    .form-input::placeholder{color:#b5b5b5;}
+
+    .form-select{
+      width:100%;padding:14px 16px;border:2px solid #e5e5e5;border-radius:12px;
+      font-family:"Inter",sans-serif;font-size:15px;background:#fff;cursor:pointer;
+    }
+    .form-select:focus{outline:none;border-color:var(--accent);}
+
+    .btn-create{
+      width:100%;padding:16px;border:none;border-radius:14px;
+      background:#111;color:#fff;font-weight:700;font-size:16px;
+      cursor:pointer;box-shadow:var(--shadow);transition:all .3s;
+    }
+    .btn-create:hover{background:#333;transform:translateY(-2px);box-shadow:0 12px 24px rgba(0,0,0,0.15);}
+    .btn-create:active{transform:translateY(0);}
+    .btn-create:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+
+    .btn-create.loading{background:linear-gradient(135deg,#60a5fa,#3b82f6);position:relative;}
+    .btn-create.loading::after{
+      content:"";width:20px;height:20px;border-radius:50%;
+      border:3px solid rgba(255,255,255,.9);border-top-color:transparent;
+      position:absolute;right:20px;top:50%;margin-top:-10px;
+      animation:spin .8s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .success-msg{
+      padding:16px;background:#10b981;color:#fff;border-radius:12px;
+      text-align:center;font-weight:600;margin-bottom:18px;
+      animation:slideIn .3s ease-out;
+    }
+    @keyframes slideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+
+    .error-msg{
+      padding:16px;background:#ef4444;color:#fff;border-radius:12px;
+      text-align:center;font-weight:600;margin-bottom:18px;
+    }
+
+    .small-muted{font-size:13px;color:var(--muted);margin-top:6px;}
+
+    .nav{
+      position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:auto;
+      background:#000;padding:12px 14px;gap:8px;display:flex;justify-content:space-around;
+      z-index:1000;box-shadow:0 -2px 12px rgba(0,0,0,.35);border-top:1px solid #111;
+    }
+    .nav::before{content:"";position:fixed;left:0;right:0;bottom:0;height:88px;background:#000;z-index:-1;}
+    .nav .item{flex:1;color:#fff;text-align:center;text-decoration:none;padding:12px 0;border-radius:16px;background:transparent;transition:all .3s;display:flex;flex-direction:column;align-items:center;gap:0;}
+    .nav .item svg{width:26px;height:26px;stroke:currentColor;}
+    .nav .item:not(.active):hover{background:rgba(255,255,255,0.08);}
+    .nav .item.active{color:#000;font-weight:600;background:#fff;border:1px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,0.2);}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <h1>📋 Create Task</h1>
+      <p>Add a new task for users to complete</p>
+    </div>
+
+    <div id="successMsg" style="display:none;"></div>
+    <div id="errorMsg" style="display:none;"></div>
+
+    <div class="card">
+      <form id="taskForm">
+        <div class="form-group">
+          <label class="form-label" for="taskTitle">Task Title</label>
+          <input 
+            type="text" 
+            id="taskTitle" 
+            class="form-input" 
+            placeholder="Enter task title"
+            required
+          />
+          <div class="small-muted">Give your task a clear and attractive title</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="taskDescription">Task Description</label>
+          <input 
+            type="text" 
+            id="taskDescription" 
+            class="form-input" 
+            placeholder="Describe what users need to do"
+            required
+          />
+          <div class="small-muted">Brief description of the task</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="taskType">Task Type</label>
+          <select id="taskType" class="form-select" required>
+            <option value="">Select task type</option>
+            <option value="telegram">Telegram Channel</option>
+            <option value="twitter">Twitter/X Follow</option>
+            <option value="instagram">Instagram Follow</option>
+            <option value="youtube">YouTube Subscribe</option>
+            <option value="facebook">Facebook Follow</option>
+            <option value="other">Other Social Link</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="socialLink">Social Media Link</label>
+          <input 
+            type="url" 
+            id="socialLink" 
+            class="form-input" 
+            placeholder="https://t.me/yourchannel"
+            required
+          />
+          <div class="small-muted">Full URL to your channel/profile</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="maxUsers">Maximum Active Users</label>
+          <input 
+            type="number" 
+            id="maxUsers" 
+            class="form-input" 
+            placeholder="1000"
+            min="1"
+            required
+          />
+          <div class="small-muted">How many users can complete this task</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="rewardAmount">Reward Amount</label>
+          <input 
+            type="number" 
+            id="rewardAmount" 
+            class="form-input" 
+            placeholder="10"
+            min="1"
+            required
+          />
+          <div class="small-muted">Points/rewards users will earn</div>
+        </div>
+
+        <button type="submit" class="btn-create" id="createBtn">
+          Create Task
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="nav">
+    <a href="index.html" class="item" aria-label="Home">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+    </a>
+    <a href="about.html" class="item" aria-label="About">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+    </a>
+    <a href="profile.html" class="item" aria-label="Profile">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+    </a>
+    <a href="tasks.html" class="item active" aria-label="Tasks">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+    </a>
+    <a href="refer.html" class="item" aria-label="Refer">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+    </a>
+    <a href="global.html" class="item" aria-label="Global">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+    </a>
+  </div>
+
+  <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import { getDatabase, ref, push, set, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+
+// ==================== FIREBASE CONFIG ====================
+const firebaseConfig = {
+  apiKey: "AIzaSyBJwIzDj6TQWaovZYnYg7YtbNBMWuOP3x0",
+  authDomain: "targetwinbot.firebaseapp.com",
+  projectId: "targetwinbot",
+  storageBucket: "targetwinbot.firebasestorage.app",
+  messagingSenderId: "822730504713",
+  appId: "1:822730504713:web:30b7cef1dfbcfa375656d8"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+// ==================== UI ELEMENTS ====================
+const form = document.getElementById('taskForm');
+const createBtn = document.getElementById('createBtn');
+const successMsg = document.getElementById('successMsg');
+const errorMsg = document.getElementById('errorMsg');
+
+// ==================== SHOW MESSAGES ====================
+function showSuccess(msg) {
+  successMsg.textContent = msg;
+  successMsg.className = 'success-msg';
+  successMsg.style.display = 'block';
+  setTimeout(() => {
+    successMsg.style.display = 'none';
+  }, 4000);
+}
+
+function showError(msg) {
+  errorMsg.textContent = msg;
+  errorMsg.className = 'error-msg';
+  errorMsg.style.display = 'block';
+  setTimeout(() => {
+    errorMsg.style.display = 'none';
+  }, 4000);
+}
+
+// ==================== FORM SUBMISSION ====================
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  // Get form values
+  const title = document.getElementById('taskTitle').value.trim();
+  const description = document.getElementById('taskDescription').value.trim();
+  const taskType = document.getElementById('taskType').value;
+  const socialLink = document.getElementById('socialLink').value.trim();
+  const maxUsers = parseInt(document.getElementById('maxUsers').value);
+  const rewardAmount = parseInt(document.getElementById('rewardAmount').value);
+
+  // Validation
+  if (!title || !description || !taskType || !socialLink || !maxUsers || !rewardAmount) {
+    showError('Please fill all fields correctly!');
+    return;
+  }
+
+  if (maxUsers < 1) {
+    showError('Maximum users must be at least 1!');
+    return;
+  }
+
+  if (rewardAmount < 1) {
+    showError('Reward amount must be at least 1!');
+    return;
+  }
+
+  // Disable button and show loading
+  createBtn.disabled = true;
+  createBtn.classList.add('loading');
+  createBtn.textContent = 'Creating...';
+
+  try {
+    // Create new task object
+    const taskData = {
+      title: title,
+      description: description,
+      type: taskType,
+      link: socialLink,
+      maxUsers: maxUsers,
+      completedUsers: 0,
+      rewardAmount: rewardAmount,
+      status: 'active',
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+
+    // Push to Firebase
+    const tasksRef = ref(db, 'tasks');
+    const newTaskRef = push(tasksRef);
+    await set(newTaskRef, taskData);
+
+    // Show success message
+    showSuccess('✅ Task created successfully!');
+    
+    // Reset form
+    form.reset();
+
+    // Optional: Redirect to tasks list after 2 seconds
+    setTimeout(() => {
+      window.location.href = 'tasks.html';
+    }, 2000);
+
+  } catch (error) {
+    console.error('Error creating task:', error);
+    showError('❌ Failed to create task. Please try again!');
+  } finally {
+    // Re-enable button
+    createBtn.disabled = false;
+    createBtn.classList.remove('loading');
+    createBtn.textContent = 'Create Task';
+  }
+});
+</script>
+</body>
+</html>
